@@ -8,18 +8,7 @@ Created on Sat Nov 17 21:58:19 2018
 import re
 from textblob import TextBlob
 
-def clean_tweet(tweet):
-    ''' to remove links and special characters '''
-    return ' '.join(re.sub("(@[@A-Za-z]+)|([^@A-Za-z \t])|(\w+:\/\/\S+)", " ", \
-                           tweet).split())
-def analyze_sentiment(tweet):
-    analysis = TextBlob(clean_tweet(tweet))
-    if analysis.sentiment.polarity > 0:
-        return 1
-    elif analysis.sentiment.polarity == 0:
-        return 0
-    else:
-        return -1
+
 
 from __future__ import print_function
 import os
@@ -38,15 +27,33 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier
 
+def clean_tweet(tweet):
+    ''' to remove links and special characters '''
+    return ' '.join(re.sub("(@[@A-Za-z]+)|([^@A-Za-z \t])|(\w+:\/\/\S+)", " ", \
+                           tweet).split())
+
+# To check the polarity of the tweet
+def analyze_sentiment(tweet):
+    analysis = TextBlob(clean_tweet(tweet))
+    if analysis.sentiment.polarity > 0:
+        return 1
+    elif analysis.sentiment.polarity == 0:
+        return 0
+    else:
+        return -1
+
+# List of stopwords
 cached = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves','you','your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now', 'also', 'said', 'would', 'k']
 stopwords = set(cached)
 
 def remove_stopwords(t):
     return ' '.join(x if x.lower() not in stopwords else '' for x in str(t).split())
 
+# Reading the training and testing file
 train = pd.read_csv('./data/train.csv')
 test = pd.read_csv('./data/test.csv')
 
+# adding features
 train['text'] = map(remove_stopwords, train['text'])
 test['text'] = map(remove_stopwords, test['text'])
 
@@ -79,6 +86,7 @@ fvars = ['handle', 'sent', 'thank']
 #d['x'] = map(lambda x: 1 if 'trump' in x.lower().split() else 0, train['text'])
 #sns.swarmplot(y="x", x="label", data=d)
 
+# computing tfidf
 v1 = tfidf_vec_(train['text'])
 v2 = count_vec_(train['text'])
 x = v1.transform(train['text']).toarray()
@@ -88,6 +96,7 @@ y = train['label']
 x = np.hstack((x, train[fvars].values))
 xtest = np.hstack((xtest, test[fvars].values))
 
+#generating models
 xtrain, xvalid, ytrain, yvalid = train_test_split(x, y, test_size=0.25, \
                                                   random_state=1000)
 
